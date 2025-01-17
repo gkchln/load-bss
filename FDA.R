@@ -1,6 +1,7 @@
 library(fda)
 library(plotly)
 library(stringr)
+library(progress)
 
 file_path <- 'data/daily_curves.csv'
 df_fda <- t(read.csv(file_path, row.names = 1, check.names = FALSE))
@@ -323,7 +324,7 @@ export_projected <- function(nb.pc) {
   }
   rownames(res) <- colnames(df_fda)
   colnames(res) <- t
-  write.csv(res, file = sprintf('data/2_processed/daily_curves_reconstructed_%dPCs.csv', nb.pc), row.names = TRUE)
+  write.csv(res, file = sprintf('data/daily_curves_reconstructed_%dPCs.csv', nb.pc), row.names = TRUE)
 }
 
-export_projected(nb.pc = 3)
+export_projected(nb.pc = 4)
