@@ -8,6 +8,7 @@ import time
 from tqdm import tqdm
 import calendar
 from os import environ
+import json
 
 # Logging paramneters
 logging.basicConfig(
@@ -17,14 +18,14 @@ logging.basicConfig(
 )
 
 # API access parameters
-access_url = 'https://api.terna.it/transparency/oauth/accessToken'
+access_url = 'https://api.terna.it/public-api/access-token'
 API_KEY = environ['API_KEY']
 SECRET = environ['API_SECRET']
 payload = f'grant_type=client_credentials&client_id={API_KEY}&client_secret={SECRET}'
 access_headers = {'Content-Type': 'application/x-www-form-urlencoded'}
 
 # API load endpoint parameters
-url = 'https://api.terna.it/transparency/v1.0/gettotalload'
+url = 'https://api.terna.it/load/v2.0/total-load'
 
 
 ### Functions ###
@@ -53,7 +54,9 @@ def fetch_total_load(url, headers, date_from, date_to):
         r.raise_for_status()
     else:
         try:
-            return pd.DataFrame(r.json()['totalLoad'])
+            # with open('response.json', 'w') as f:
+            #     json.dump(r.json(), f, indent=2)
+            return pd.DataFrame(r.json()['total_load'])
         except:
             logging.error(r)
             raise
@@ -85,9 +88,9 @@ def get_load_data(url, access_token, date_from, date_to):
         dfs = [df] + dfs
         time.sleep(1)
     output_df = pd.concat(dfs, ignore_index=True)
-    output_df['Date']= output_df.Date.astype('datetime64[ns]')
+    output_df['date']= output_df['date'].astype('datetime64[ns]')
     # We keep midnight of the last day
-    output_df = output_df[output_df.Date <= datetime.combine(datetime.strptime(date_to, "%Y-%m-%d") + timedelta(days=1), dt_time.min)]
+    output_df = output_df[output_df['date'] <= datetime.combine(datetime.strptime(date_to, "%Y-%m-%d") + timedelta(days=1), dt_time.min)]
 
     return output_df
 
@@ -97,9 +100,9 @@ def get_load_data(url, access_token, date_from, date_to):
 # first_day_previous_month = last_day_previous_month.replace(day=1)
 
 # By default we retrieve all data for last month
-date_from = "2023-01-01"
-date_to = "2023-12-31"
-outfile = 'data/load_2023.csv'
+date_from = "2024-01-01"
+date_to = "2024-12-31"
+outfile = 'data/load_2024.csv'
 
 ### Main ###
 if __name__ == "__main__":

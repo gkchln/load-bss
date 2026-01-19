@@ -13,6 +13,7 @@ logging.basicConfig(
 
 def clean_load(input_df):
     df = input_df.copy()
+    df = df[['Date', 'Total_Load_MW', 'Forecast_Total_Load_MW', 'Bidding_Zone']]
     df = df[df.Date.dt.minute == 0] # The original granularity of the data is the hour and 15-min interval values are just interpolated
     df['Total_Load_MW'] = df['Total_Load_MW'].astype(float)
     df.drop('Forecast_Total_Load_MW', axis=1, inplace=True)
@@ -106,8 +107,8 @@ def preprocess_load(input_df, zonal=False):
 
 
 ### Script parameters ###
-infile = 'data/load_2023.csv'
-outfile = 'data/daily_curves_2023.csv'
+infile = 'data/load_2023_2024.csv'
+outfile = 'data/daily_curves_2023_2024.csv'
 zonal = False
 
 if __name__ == "__main__":

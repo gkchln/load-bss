@@ -29,6 +29,8 @@ enel_files = [
     'data/1_input/indicators/Domestico 2022 e 2023.xlsx'
 ]
 
+include_enel = True  # Set to False if you do not want to include Enel data in the indicators
+
 
 # %%
 def get_curves_info(curves_df):
@@ -52,27 +54,32 @@ def process_sector_consumption(infile, year_total):
     cons_df = cons_df.mul(corrected_total / uncorrected_total, axis=0)
     return cons_df
 
-def get_indicators(imser_file, imcei_file, enel_files):
+def get_indicators(imser_file, imcei_file, enel_files, include_enel=include_enel):
     """Read indicator files and merge them in the same monthly dataframe"""
     imser = pd.read_excel(imser_file)
-    imser = imser.set_index('Mese').rename({'IMSER (GWh)': 'IMSER'}, axis=1) # We don't have data for this year
+    imser['Mese'] = pd.to_datetime(imser['Anno'].astype(str) + '-' + imser['Mese Abbreviato'], format='%Y-%b')
+    imser = imser.set_index('Mese').drop(['Anno', 'Mese Abbreviato'], axis=1)
 
     imcei = pd.read_excel(imcei_file)
     imcei['Mese'] = pd.to_datetime(imcei['Anno'].astype(str) + '-' + imcei['Mese'], format='%Y-%b')
     imcei = imcei.set_index('Mese').drop('Anno', axis=1).rename({'IMCEI Mensile': 'IMCEI'}, axis=1)
 
-    enel = pd.concat([pd.read_excel(file, skiprows=12, usecols=range(3)) for file in enel_files], ignore_index=True)
-    enel = enel.set_index('Mese').drop('Domestico kWh', axis=1)
+    if include_enel:
+        enel = pd.concat([pd.read_excel(file, skiprows=12, usecols=range(3)) for file in enel_files], ignore_index=True)
+        enel = enel.set_index('Mese').drop('Domestico kWh', axis=1)
 
     indics = imcei.copy()
     indics['IMSER'] = imser['IMSER']
-    indics['Enel'] = enel['Domestico GWh']
+    if include_enel:
+        indics['Enel'] = enel['Domestico GWh']
+    else:
+        indics['Enel'] = np.nan
     indics = indics[indics.index >= "2020-01-01"]
     
     return indics
 
 # %% Function to get matrix Y in the LCNMF
-def get_Y(indic_df, cons_df, year_month_totals):
+def get_Y(indic_df, cons_df, year_month_totals, corrected=True, include_enel=include_enel):
     indics = indic_df.copy()
     indics.rename(columns={'IMSER': 'Services', 'IMCEI': 'Industry', 'Enel': 'Domestic'}, inplace=True)
     indics['year'] = indics.index.year
@@ -82,10 +89,13 @@ def get_Y(indic_df, cons_df, year_month_totals):
     cons_rescaling = indics[['year']].merge(cons_df, left_on='year', right_index=True, how='left').drop('year', axis=1)
     indics.drop('year', axis=1, inplace=True)
     Y = indics.div(indic_totals).mul(cons_rescaling)
+    if not include_enel:
+        Y['Domestic'] = year_month_totals.values - Y[['Industry', 'Services']].sum(axis=1)
     # Realign with load data at month level (since it is not guaranteed anymore at the month level after the breakdown along months)
-    uncorrected_total = Y[['Domestic', 'Industry', 'Services']].sum(axis=1).values
-    corrected_total = year_month_totals.values
-    Y = Y.mul(corrected_total / uncorrected_total, axis=0)
+    if include_enel and corrected:
+        uncorrected_total = Y[['Domestic', 'Industry', 'Services']].sum(axis=1).values
+        corrected_total = year_month_totals.values
+        Y = Y.mul(corrected_total / uncorrected_total, axis=0)
     return Y
 
 # %% Function to get matrix B in the LCNMF
