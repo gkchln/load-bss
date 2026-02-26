@@ -1,7 +1,12 @@
-# load_bss
-Blind Source Separation for electricity load data.
+# load-bss
 
- Decomposing Italy's national load curve in macro-economic sectors contributions using linearly-constrained nonnegative matrix factorization (LCNMF)
+<p align="center">
+  <img src="grabs.jpg" alt="Graphical abstract" width="600">
+</p>
+
+This repository contains the code associated with the following paper:
+
+> Koechlin, G., Bovera, F., Degli Innocenti, E., Santini B., Venturi A., Vazio, S., & Secchi, P. (2025). **A Blind Source Separation Framework to Monitor Sectoral Power Demand from Grid-Scale Load Measurements**. _arXiv preprint_. [`doi.org/10.48550/arXiv.2512.15232`](https://doi.org/10.48550/arXiv.2512.15232)
 
 ## Set-up
 ### Create Python virtual environment
