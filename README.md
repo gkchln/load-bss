@@ -6,7 +6,7 @@
 
 This repository contains the code associated with the following paper:
 
-> Koechlin, G., Bovera, F., Degli Innocenti, E., Santini B., Venturi A., Vazio, S., & Secchi, P. (2025). **A Blind Source Separation Framework to Monitor Sectoral Power Demand from Grid-Scale Load Measurements**. _arXiv preprint_. [`doi.org/10.48550/arXiv.2512.15232`](https://doi.org/10.48550/arXiv.2512.15232)
+> Koechlin, G., Bovera, F., Degli Innocenti, E., Santini B., Venturi A., Vazio, S., & Secchi, P. (2025). **A Blind Source Separation Framework to Monitor Sectoral Power Demand from Grid-Scale Load Measurements**. _Sustainable Energy, Grids and Networks_. [`doi.org/10.1016/j.segan.2026.102259`](https://doi.org/10.1016/j.segan.2026.102259)
 
 ## Set-up
 ### Create Python virtual environment
@@ -38,12 +38,11 @@ Run Python script `load_data_ingestion.py`
 - **IMCEI**: Excel file to be downloaded from dashboard at [dati.terna.it/en/load/imcei#imcei-vs-ipi](https://dati.terna.it/en/load/imcei#imcei-vs-ipi)
 - **IMSER**: Provided by Terna
 
-### Annual sector consumption (ASC)
+### Annual sector demand (ASD)
 Excel file manually built from statistical reports "Consumi 20XX" available at [terna.it/it/sistema-elettrico/statistiche/pubblicazioni-statistiche](https://www.terna.it/it/sistema-elettrico/statistiche/pubblicazioni-statistiche.)
 
 ## Data preprocessing & parameters setting
 1. Run Python script `load_preprocessing.py` to get daily load curves in functional form from raw load data
-
 2. Run R script `FDA.R` to perform the functional data analysis (smoothing and functional principal component analysis)
 3. Use jupyter notebook `search_lcnmf_hyperparams.ipynb` to set $\alpha$ and $\beta$ hyperparameters to suitable values
 
@@ -52,19 +51,19 @@ Excel file manually built from statistical reports "Consumi 20XX" available at [
 ### Perform the $N$ Monte-Carlo simulations of the LCNMF 
 Run Python script `blind_separation.py` from terminal:
 ```{bash}
-python3 blind_separation.py --n_comp 5 --alpha 3e-10 --beta 1 --n_runs 1000 --infile daily_curves.csv --outfile lcnmf_results.npz
+python -m scripts.blind_separation --n_comp 5 --alpha 3e-10 --beta 1 --n_runs 1000 --infile data/daily_curves.csv --outfile data/lcnmf_results.npz
 ```
 
 ### Post-process and analyse MC results
-Run notebook `blind_separation_postprocessing.ipynb`
+Run notebook `notebooks/blind_separation_postprocessing.ipynb`
 
 ### Decompose load in sectors contributions
-Run notebook `load_decomposition_analysis.ipynb` to decompose load from the ensemble of LCNMF models fitted, resulting from the MC simulations. It also contains the analysis of the load profiles per sector.
+Run notebook `notebook/load_decomposition_analysis.ipynb` to decompose load from the ensemble of LCNMF models fitted, resulting from the MC simulations. It also contains the analysis of the load profiles per sector.
 
-It is also possible to directly estimate the monthly consumption per sector from new load data (preprocessed as described previously, and composed of entire months) by running the Python script `decompose_load.py` from the terminal:
+It is also possible to directly estimate the monthly consumption per sector from new load data (preprocessed as described previously, and composed of entire months) by running the Python script `scripts/decompose_load.py` from the terminal:
 
 ```{bash}
-python3 decompose_load.py --infile_load daily_curves_new.csv --infile_models lcnmf_ens.pkl --outfile sectors_monthly_consumption_new.csv
+python -m scripts.decompose_load --infile_load data/daily_curves_new.csv --infile_models data/lcnmf_ens.pkl --outfile data/sectors_monthly_consumption_new.csv
 ```
 The output file contains the estimation of each single LCNMF model (resulting from the MC simulations) from which any summary statistic can be derived (mean, median, prediction interval, ...etc.)
 
